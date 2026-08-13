@@ -1,83 +1,89 @@
-# 🛡️ Siber Güvenlik Olay Müdahalesi ve Erişim Kontrolü Analizi (DFIR)
-> **Konu:** Yetkisiz Finansal Transfer ve Ayrıcalıklı Hesap İstismarı Analizi  
-> **Rol:** Kıdemli Siber Güvenlik Analisti / Olay Müdahale Uzmanı (Incident Responder)
+# 🛡️ SOC Olay Analizi: Yetkisiz Finansal Transfer ve IAM Zafiyeti
 
-![Cyber Security](https://img.shields.io/badge/Focus-Incident%20Response%20%26%20IAM-blue?style=for-the-badge&logo=cyberdefenders)
-![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
-![Severity](https://img.shields.io/badge/Severity-CRITICAL-red?style=for-the-badge)
+> ⚠️ **UYARI / DISCLAIMER:** Bu çalışma, siber güvenlik eğitim ve uygulama senaryoları kapsamında hazırlanmış **örnek bir Blue Team lab analizi/raporudur**. Gerçek kişi, kurum veya canlı sistem verisi içermez.
 
 ---
 
-## 📌 1. Senaryo Özeti ve Senaryo Arka Planı
+## 📌 Proje Özeti (Executive Summary)
 
-Büyüyen bir işletmede göreve başlayan **Siber Güvenlik Uzmanı** olarak, şirket hesaplarından bilinmeyen ve yetkisiz bir banka hesabına para transferi yapıldığı tespit edilmiştir. Finans departmanı kendi taraflarında bir işlem hatası olmadığını belirtmiş ve şans eseri ödeme son anda durdurulabilmiştir. 
+Bu çalışmada, büyümekte olan bir şirketin finans/maaş sistemine yetkisiz erişim sağlanarak sahte banka hesabı üzerinden finansal transfer yapılmaya çalışılması olayı (Incident) bir SOC Analisti gözüyle incelenmiştir.
 
-Şirket yönetimi, olayın arka planının araştırılması, tehdit aktörünün tespiti, istismar edilen güvenlik zafiyetlerinin çıkarılması ve gelecekteki benzer saldırıları önleyici tedbirlerin alınması amacıyla bir adli inceleme ve erişim kontrolü analizi başlatılmasını talep etmiştir.
+Olayın kök nedeni; şirketten yıllar önce ayrılmış bir çalışana ait **Domain Admin / Privilege** yetkili hesabın pasife alınmaması (**Stale Account / Deprovisioning Failure**) ve Kimlik Yönetimi (IAM) süreçlerindeki eksikliklerdir.
 
 ---
 
-## 🔍 2. Olay Günlüğü ve Adli İnceleme Bulguları
+## 🎯 Senaryo ve Problem Tanımı
 
-Sistem ve erişim loglarının (Access Logs) analizi sonucunda elde edilen adli kanıtlar aşağıdaki gibidir:
+Şirket tarafından işe alınan ilk Siber Güvenlik Uzmanı olarak, Finans Müdürlüğü'nden gelen bir ihbar üzerine inceleme başlatılmıştır. 
 
-| İnceleme Parametresi | Tespit Edilen Değer / Bilgi |
+* **Olay:** İşletmeden bilinmeyen bir banka hesabına yetkisiz para transferi teşebbüsü gerçekleşmiş, finans ekipleri ödemeyi son anda durdurmuştur.
+* **Amaç:** Erişim günlüklerinin (Access Logs) adli analizi, tehdit aktörünün tespiti, istismar edilen erişim kontrollerinin belirlenmesi ve tekrarlanmaması için IAM/PAM güvenlik tavsiyelerinin sunulması.
+
+---
+
+## 🔍 Olay & Günlük (Log) Bilgileri
+
+| Parametre | Detay |
 | :--- | :--- |
 | **Olay Zamanı (Timestamp)** | `10/03/2023 - 08:29:57 AM` |
 | **İlişkili Hesap (Domain\User)** | `Legal\Administrator` |
-| **Ağ ve Cihaz Bilgisi** | **IP:** `152.207.255.255` \| **Hostname:** `Up2-NoGud` |
-| **Kimlik / Kullanıcı Bilgisi** | **Robert Taylor Jr.** (`rt.jr@erems.net`) |
-| **İstihdam / Sözleşme Süresi** | `09/04/2019 – 27/12/2019` |
-| **Saldırı / Olay Tipi** | Sahte Banka Kaydı Ekleme / Yetkisiz Finansal Transfer Girişimi |
-
-> [!WARNING]
-> **Kritik Tespit:** 10/03/2023 tarihinde `Up2-NoGud` terminali üzerinden `Legal\Administrator` yetkileri kullanılarak maaş/ödeme sistemine sahte banka hesabı eklenmiştir. Hesabı kullanan şahsın, **iş akdi 2019 yılında sonlandırılmış** eski bir sözleşmeli personel olduğu anlaşılmıştır.
+| **Kaynak IP Adresi** | `152.207.255.255` |
+| **Terminal Hostname** | `Up2-NoGud` |
+| **Tespit Edilen Şüpheli Kişi** | Robert Taylor Jr. (`rt.jr@erems.net`) |
+| **Şahsın Şirketteki Sözleşme Süresi** | `09/04/2019 – 27/12/2019` |
+| **Zafiyet Türü** | IAM - Deprovisioning Zafiyeti / Un-deprovisioned Privilege Account |
 
 ---
 
-## 🚨 3. Tespit Edilen Güvenlik Zafiyetleri ve Root Cause (Kök Neden) Analizi
+## 🕵️‍♂️ Teknik İnceleme ve Adli İnceleme Adımları
 
-Olayın ana nedeni, personelin işten ayrılış tarihi üzerinden **yaklaşık 4 yıl geçmesine rağmen** domain seviyesinde kritik yetkilere sahip bir hesabın kapatılmamasıdır.
-
-### 🔴 Sorunlar (Issues Identified)
-
-1. **Etkisiz Kullanıcı Yaşam Döngüsü ve Atıl Hesap Yönetimi (Stale/Dormant Account Management)**
-   * İşten ayrılış tarihi (2019) üzerinden yıllar geçmesine rağmen eski çalışana ait `Legal\Administrator` hesabının pasife alınmaması veya silinmemesi, Kimlik ve Erişim Yönetimi (IAM) süreçlerinde kritik bir boşluk olduğunu göstermektedir.
-
-2. **Ayrıcalıklı Hesapların İstismarı (Privilege Abuse & Deprovisioning Yetersizliği)**
-   * En üst seviye sistem yönetimi yetkilerine (`Administrator`) sahip bir hesabın kontrolsüz şekilde açık bırakılması; eski çalışanın veya hesabı ele geçiren 3. taraf tehdit aktörlerinin yetkisiz finansal işlemler gerçekleştirmesine doğrudan zemin hazırlamıştır.
-
-3. **Periyodik Erişim Denetimi ve Gözden Geçirme Yetersizliği (Lack of Access Review)**
-   * Sistemdeki aktif/pasif hesapların, yetki seviyelerinin ve atıl duruma düşmüş erişimlerin düzenli aralıklarla denetlenmediği (Access Review) tespiti yapılmıştır.
+1. **Log Analizi:** `10/03/2023 08:29:57` zaman damgalı erişim logları incelendiğinde, `152.207.255.255` IP adresli `Up2-NoGud` hostname'li terminal üzerinden `Legal\Administrator` yetkileri kullanılarak sisteme giriş yapıldığı tespit edilmiştir.
+2. **Eylemin Tespiti:** Hesabın yetkileri istismar edilerek finans/maaş sistemine sahte bir banka kaydı (ödeme hesabı) eklendiği saptanmıştır.
+3. **Kullanıcı Hesabı Çapraz Sorgusu (HR Data Cross-Check):** İnsan Kaynakları (İK) kayıtları ile yapılan çapraz kontrolde, `Legal\Administrator` hesabıyla ilişkili e-posta adresinin (`rt.jr@erems.net`) 2019 yılında işten ayrılmış olan eski sözleşmeli personel **Robert Taylor Jr.**'a ait olduğu görülmüştür.
 
 ---
 
-## 🛡️ 4. Önleyici ve İyileştirici Tavsiyeler (Recommendations)
+## ⚠️ Tespit Edilen Zafiyetler ve Güvenlik Açıkları
 
-Gelecekte benzer olayların yaşanmaması ve IAM mimarisinin olgunlaştırılması için aşağıdaki aksiyonlar alınmalıdır:
+### 1. Etkisiz Kullanıcı Yaşam Döngüsü ve Yetkisiz Erişim (Stale / Dormant Account Management)
+İşten ayrılış tarihi (2019) üzerinden **yaklaşık 4 yıl geçmesine rağmen** eski çalışana ait `Legal\Administrator` hesabının pasife alınmaması veya silinmemesi, kurum genelindeki kimlik ve erişim yönetimi (IAM) süreçlerinde kritik bir zafiyet olduğunu göstermektedir.
 
-### 1. Kimlik ve İşten Ayrılış Yönetimi (IAM & Deprovisioning)
-* İnsan Kaynakları (İK) ve BT/Güvenlik birimleri arasında otomatik entegrasyon sağlanmalıdır. İş akdi sonlanan veya bölüm değiştiren personelin tüm erişim yetkileri **işten ayrıldığı gün ve saat itibarıyla** otomatik olarak iptal edilmeli ve hesapları pasife alınmalıdır.
-* Sistemde atıl (dormant/stale) kalan hesapların otomatik tespiti için periyodik **Erişim Gözden Geçirme (Access Review)** süreçleri işletilmelidir.
+### 2. Ayrıcalıklı Hesapların Yetkisiz Kullanımı (Privilege Abuse & Deprovisioning Defect)
+En üst seviye sistem yetkilerine (`Administrator`) sahip bir hesabın kontrolsüz şekilde aktif bırakılması; eski personelin veya hesabı ele geçiren 3. tarafların yetkisiz finansal işlemler gerçekleştirmesine doğrudan zemin hazırlamıştır.
 
-### 2. Ayrıcalıklı Hesap Yönetimi (PAM) ve En Az Ayrıcalık İlkesi (PoLP / SoD)
-* **Görevler Ayrılığı (Segregation of Duties - SoD):** Sistem yönetimi yetkileri ile finansal/bankacılık işlem yetkileri kesin çizgilerle ayrılmalıdır. Bir `Administrator` hesabının doğrudan banka veya ödeme sistemlerine müdahale etmesi engellenmelidir.
-* **PAM Uygulaması:** Yönetici seviyesindeki tüm hesaplar Privileged Access Management (PAM) çözümleri ile kasa (vault) altına alınmalı ve oturumlar kayıt altına alınmalıdır.
-
-### 3. Çok Faktörlü Kimlik Doğrulama (MFA)
-* Tüm ayrıcalıklı hesaplara, VPN bağlantılarına ve finansal sistemlere erişimde **MFA (Multi-Factor Authentication)** kullanımı zorunlu hale getirilmelidir.
-
-### 4. Adli Bilişim ve Fiziksel Security Entegrasyonu (Forensics & Physical Review)
-* Olayın eski çalışan tarafından uzaktan mı, kurum içerisinden mi yoksa iş birliği yapan başka bir personel aracılığıyla mı gerçekleştirildiğini netleştirmek adına; log kayıtları ile birlikte **CCTV (kamera)** ve **fiziksel kartlı geçiş sistemleri** adli bilişim incelemesine dahil edilmelidir.
+### 3. Erişim Denetimi ve Periyodik Yetki Gözden Geçirme Yetersizliği
+Sistemde aktif bulunan ayrıcalıklı hesapların düzenli aralıklarla denetlenmediği (**Access Review**) ve pasif hesap tespit mekanizmalarının çalışmadığı anlaşılmıştır.
 
 ---
 
-## 📂 5. Depo Yapısı (Repository Structure)
+## ⚙️ MITRE ATT&CK Eşleşmesi
 
-```text
-.
-├── README.md                                # Proje açıklama ve analiz raporu
-├── docs/
-│   ├── Şirkette Finans Saldırısı Loglar.xlsx # Olay ve erişim kontrolü analiz tablosu
-│   └── Şirkette Finans Saldırısı Senaryo.png # Olay senaryosu ve detay görseli
-└── src/
-    └── log_parser_helper.py                 # (Opsiyonel) Log ayrıştırma betikleri
+* **Tactics:** Initial Access, Persistence, Privilege Escalation
+* **Techniques:**
+  * `T1078.002` - Valid Accounts: Domain Accounts
+  * `T1078.003` - Valid Accounts: Local Accounts
+  * `T1098` - Account Manipulation
+
+---
+
+## 🛠️ İyileştirme Tavsiyeleri ve Önleyici Aksiyonlar (Remediation Plan)
+
+### 🚨 Kısa Vadeli (Acil) Aksiyonlar
+* **Hesabın Kapatılması:** `Legal\Administrator` hesabı ve ilişkili tüm oturumlar derhal sonlandırılmalı, hesap pasife alınmalıdır.
+* **Adli Bilişim & CCTV İncelemesi:** Olayın harici bir saldırgan mı yoksa içeriden iş birliği yapan başka bir çalışan tarafından mı gerçekleştirildiğini doğrulamak adına; log kayıtları ile birlikte kritik çalışma alanlarındaki kamera (CCTV) ve fiziksel giriş kayıtları adli bilişim incelemesine alınmalıdır.
+
+### 🛡️ Orta ve Uzun Vadeli Aksiyonlar
+* **Erişim ve Hesap Yaşam Döngüsü Yönetimi (IAM & Deprovisioning):** İK (Human Resources) ve IT sistemleri entegre edilmeli; iş akdi feshedilen personelin tüm erişim yetkileri **işten ayrıldığı gün Otomatik (Automated Deprovisioning)** olarak iptal edilmelidir.
+* **Ayrıcalıklı Hesap Yönetimi (PAM):** `Administrator` seviyesindeki tüm kritik hesaplar PAM çözümleri altında toplanmalı, şifre kasaları (Vault) kullanılmalı ve periyodik erişim gözden geçirme (**Access Review**) süreçleri yürütülmelidir.
+* **En Az Ayrıcalık İlkesi (PoLP) ve Görevler Ayrılığı (SoD):** Sistem yönetimi yetkileri ile finansal/bankacılık işlem yetkileri birbirinden kesin çizgilerle ayrılmalıdır. Bir sistem yöneticisinin doğrudan banka/finans işlemleri gerçekleştirmesi engellenmelidir.
+* **Çok Faktörlü Kimlik Doğrulama (MFA):** Tüm ayrıcalıklı ve uzaktan erişim sağlayan hesaplarda MFA zorunlu hale getirilmelidir.
+
+---
+
+## 📁 Proje İçeriği ve Dosyalar
+
+* `Erişim Kontrolleri Çalışma Sayfası.xlsx` - Olay ve erişim kontrolü analiz çalışma dosyası.
+* `README.md` - Olay Analizi Detay Raporu.
+
+---
+*Bu rapor bir Siber Güvenlik Analisti Portföy Çalışmasıdır.*

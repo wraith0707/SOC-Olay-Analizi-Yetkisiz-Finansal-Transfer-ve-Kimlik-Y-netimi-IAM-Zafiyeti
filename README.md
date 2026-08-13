@@ -1,0 +1,1 @@
+# SOC-Olay-Analizi-Yetkisiz-Finansal-Transfer-ve-Kimlik-Y-netimi-IAM-Zafiyeti

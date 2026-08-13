@@ -56,16 +56,6 @@ Sistemde aktif bulunan ayrıcalıklı hesapların düzenli aralıklarla denetlen
 
 ---
 
-## ⚙️ MITRE ATT&CK Eşleşmesi
-
-* **Tactics:** Initial Access, Persistence, Privilege Escalation
-* **Techniques:**
-  * `T1078.002` - Valid Accounts: Domain Accounts
-  * `T1078.003` - Valid Accounts: Local Accounts
-  * `T1098` - Account Manipulation
-
----
-
 ## 🛠️ İyileştirme Tavsiyeleri ve Önleyici Aksiyonlar (Remediation Plan)
 
 ### 🚨 Kısa Vadeli (Acil) Aksiyonlar

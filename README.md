@@ -10,7 +10,7 @@
 
 ## 📌 1. Senaryo Özeti ve Senaryo Arka Planı
 
-Büyüyen bir işletmede göreve başlayan ilk **Siber Güvenlik Uzmanı** olarak, şirket hesaplarından bilinmeyen ve yetkisiz bir banka hesabına para transferi yapıldığı tespit edilmiştir. Finans departmanı kendi taraflarında bir işlem hatası olmadığını belirtmiş ve şans eseri ödeme son anda durdurulabilmiştir. 
+Büyüyen bir işletmede göreve başlayan **Siber Güvenlik Uzmanı** olarak, şirket hesaplarından bilinmeyen ve yetkisiz bir banka hesabına para transferi yapıldığı tespit edilmiştir. Finans departmanı kendi taraflarında bir işlem hatası olmadığını belirtmiş ve şans eseri ödeme son anda durdurulabilmiştir. 
 
 Şirket yönetimi, olayın arka planının araştırılması, tehdit aktörünün tespiti, istismar edilen güvenlik zafiyetlerinin çıkarılması ve gelecekteki benzer saldırıları önleyici tedbirlerin alınması amacıyla bir adli inceleme ve erişim kontrolü analizi başlatılmasını talep etmiştir.
 

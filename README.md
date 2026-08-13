@@ -72,7 +72,7 @@ Sistemde aktif bulunan ayrıcalıklı hesapların düzenli aralıklarla denetlen
 
 ## 📁 Proje İçeriği ve Dosyalar
 
-* `Erişim Kontrolleri Log Dosyası.xlsx` - Olay ve erişim kontrolü analiz çalışma dosyası.
+* `Erişim Kontrolleri Log Dosyası.xlsx` - Olay ve erişim kontrolü analiz log dosyası.
 * `README.md` - Olay Analizi Detay Raporu.
 
 ---
